@@ -1,0 +1,365 @@
+{
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "background": "white",
+    "padding": 5,
+    "width": 300,
+    "height": 250,
+    "title": {
+      "anchor": "middle",
+      "frame": "group",
+      "text": "Quarter Finals",
+      "dx": 0,
+      "offset": 10
+    },
+    "style": "cell",
+    "data": [
+      {"name": "param_9_store"},
+      {
+        "name": "source_0",
+        "url": "https://raw.githubusercontent.com/jhellingsdata/RADataHub/main/Article%20Charts/Football/euros-sim-summary-2024-07-04-melted.csv",
+        "format": {"type": "csv", "delimiter": ","},
+        "transform": [
+          {
+            "type": "formula",
+            "expr": "upper(slice(datum.team1,0,1)) + slice(datum.team1, 1)",
+            "as": "team1"
+          },
+          {"type": "formula", "expr": "toNumber(datum['Win'])", "as": "Win"},
+          {
+            "type": "window",
+            "params": [null],
+            "as": ["Ranking"],
+            "ops": ["rank"],
+            "fields": [null],
+            "sort": {"field": ["Win"], "order": ["descending"]}
+          },
+          {"type": "filter", "expr": "datum.Ranking <= 80"}
+        ]
+      },
+      {
+        "name": "data_0",
+        "source": "source_0",
+        "transform": [{"type": "filter", "expr": "datum.series == 'Semi Finals'"}]
+      },
+      {
+        "name": "data_1",
+        "source": "data_0",
+        "transform": [
+          {
+            "type": "filter",
+            "expr": "isValid(datum[\"Win\"]) && isFinite(+datum[\"Win\"])"
+          }
+        ]
+      },
+      {
+        "name": "data_2",
+        "source": "source_0",
+        "transform": [
+          {
+            "type": "filter",
+            "expr": "isValid(datum[\"value\"]) && isFinite(+datum[\"value\"])"
+          }
+        ]
+      }
+    ],
+    "signals": [
+      {
+        "name": "unit",
+        "value": {},
+        "on": [
+          {"events": "pointermove", "update": "isTuple(group()) ? group() : unit"}
+        ]
+      },
+      {
+        "name": "param_9_series_legend",
+        "value": null,
+        "on": [
+          {
+            "events": [
+              {
+                "source": "view",
+                "type": "click",
+                "markname": "series_legend_symbols"
+              },
+              {
+                "source": "view",
+                "type": "click",
+                "markname": "series_legend_labels"
+              },
+              {
+                "source": "view",
+                "type": "click",
+                "markname": "series_legend_entries"
+              }
+            ],
+            "update": "isDefined(datum.value) ? datum.value : item().items[0].items[0].datum.value",
+            "force": true
+          },
+          {
+            "events": [{"source": "view", "type": "click"}],
+            "update": "!event.item || !datum ? null : param_9_series_legend",
+            "force": true
+          }
+        ]
+      },
+      {
+        "name": "param_9",
+        "update": "vlSelectionResolve(\"param_9_store\", \"union\", true, true)"
+      },
+      {
+        "name": "param_9_tuple",
+        "update": "param_9_series_legend !== null ? {fields: param_9_tuple_fields, values: [param_9_series_legend]} : null"
+      },
+      {
+        "name": "param_9_tuple_fields",
+        "value": [{"type": "E", "field": "series"}]
+      },
+      {
+        "name": "param_9_toggle",
+        "value": false,
+        "on": [
+          {
+            "events": {"merge": [{"source": "view", "type": "click"}]},
+            "update": "event.shiftKey"
+          }
+        ]
+      },
+      {
+        "name": "param_9_modify",
+        "on": [
+          {
+            "events": {"signal": "param_9_tuple"},
+            "update": "modify(\"param_9_store\", param_9_toggle ? null : param_9_tuple, param_9_toggle ? null : true, param_9_toggle ? param_9_tuple : null)"
+          }
+        ]
+      }
+    ],
+    "marks": [
+      {
+        "name": "layer_0_marks",
+        "type": "rule",
+        "style": ["rule"],
+        "interactive": true,
+        "from": {"data": "data_1"},
+        "encode": {
+          "update": {
+            "stroke": {"value": "#676A86"},
+            "tooltip": {
+              "signal": "{\"Team\": isValid(datum[\"team1\"]) ? datum[\"team1\"] : \"\"+datum[\"team1\"], \"Round\": isValid(datum[\"series\"]) ? datum[\"series\"] : \"\"+datum[\"series\"], \"Probability\": format(datum[\"value\"], \".2%\")}"
+            },
+            "description": {
+              "signal": "\"Win: \" + (format(datum[\"Win\"], \"\")) + \"; team1: \" + (isValid(datum[\"team1\"]) ? datum[\"team1\"] : \"\"+datum[\"team1\"]) + \"; Semi Finals: \" + (format(datum[\"Semi Finals\"], \"\")) + \"; Team: \" + (isValid(datum[\"team1\"]) ? datum[\"team1\"] : \"\"+datum[\"team1\"]) + \"; Round: \" + (isValid(datum[\"series\"]) ? datum[\"series\"] : \"\"+datum[\"series\"]) + \"; Probability: \" + (format(datum[\"value\"], \".2%\"))"
+            },
+            "x": {"scale": "x", "field": "Win"},
+            "x2": {"scale": "x", "field": "Semi Finals"},
+            "y": {"scale": "y", "field": "team1", "band": 0.5},
+            "strokeWidth": {"value": 1.5}
+          }
+        }
+      },
+      {
+        "name": "view_9_marks",
+        "type": "symbol",
+        "style": ["circle"],
+        "interactive": true,
+        "from": {"data": "data_2"},
+        "encode": {
+          "update": {
+            "opacity": {"value": 1},
+            "size": [
+              {
+                "test": "!length(data(\"param_9_store\")) || vlSelectionTest(\"param_9_store\", datum)",
+                "value": 70
+              },
+              {"value": 50}
+            ],
+            "fill": {"scale": "color", "field": "series"},
+            "tooltip": {
+              "signal": "{\"Team\": isValid(datum[\"team1\"]) ? datum[\"team1\"] : \"\"+datum[\"team1\"], \"Round\": isValid(datum[\"series\"]) ? datum[\"series\"] : \"\"+datum[\"series\"], \"Probability\": format(datum[\"value\"], \".2%\")}"
+            },
+            "ariaRoleDescription": {"value": "circle"},
+            "description": {
+              "signal": "\"value: \" + (format(datum[\"value\"], \"%\")) + \"; team1: \" + (isValid(datum[\"team1\"]) ? datum[\"team1\"] : \"\"+datum[\"team1\"]) + \"; series: \" + (isValid(datum[\"series\"]) ? datum[\"series\"] : \"\"+datum[\"series\"]) + \"; Team: \" + (isValid(datum[\"team1\"]) ? datum[\"team1\"] : \"\"+datum[\"team1\"]) + \"; Round: \" + (isValid(datum[\"series\"]) ? datum[\"series\"] : \"\"+datum[\"series\"]) + \"; Probability: \" + (format(datum[\"value\"], \".2%\"))"
+            },
+            "x": {"scale": "x", "field": "value"},
+            "y": {"scale": "y", "field": "team1", "band": 0.5},
+            "shape": {"value": "circle"}
+          }
+        }
+      }
+    ],
+    "scales": [
+      {
+        "name": "x",
+        "type": "linear",
+        "domain": [0, 1],
+        "range": [0, {"signal": "width"}],
+        "zero": false,
+        "nice": true
+      },
+      {
+        "name": "y",
+        "type": "band",
+        "domain": {
+          "fields": [
+            {"data": "data_0", "field": "team1"},
+            {"data": "source_0", "field": "team1"}
+          ],
+          "sort": {"op": "min", "field": "Win", "order": "descending"}
+        },
+        "range": [0, {"signal": "height"}],
+        "paddingInner": 0,
+        "paddingOuter": 0
+      },
+      {
+        "name": "color",
+        "type": "ordinal",
+        "domain": {"data": "data_2", "field": "series", "sort": true},
+        "range": "category"
+      }
+    ],
+    "axes": [
+      {
+        "scale": "x",
+        "orient": "top",
+        "gridScale": "y",
+        "grid": true,
+        "tickCount": {"signal": "ceil(width/40)"},
+        "domain": false,
+        "labels": false,
+        "aria": false,
+        "maxExtent": 0,
+        "minExtent": 0,
+        "ticks": false,
+        "zindex": 0
+      },
+      {
+        "scale": "x",
+        "orient": "top",
+        "grid": false,
+        "format": "%",
+        "labelFlush": false,
+        "labelOverlap": true,
+        "tickCount": {"signal": "ceil(width/40)"},
+        "zindex": 0
+      },
+      {
+        "scale": "y",
+        "orient": "left",
+        "grid": false,
+        "labelPadding": 7,
+        "ticks": false,
+        "zindex": 0
+      }
+    ],
+    "legends": [
+      {
+        "orient": "bottom",
+        "values": ["Win", "Final", "Semi Finals"],
+        "fill": "color",
+        "direction": "horizontal",
+        "symbolType": "circle",
+        "encode": {
+          "labels": {
+            "name": "series_legend_labels",
+            "interactive": true,
+            "update": {
+              "opacity": [
+                {
+                  "test": "(!length(data(\"param_9_store\")) || (param_9[\"series\"] && indexof(param_9[\"series\"], datum.value) >= 0))",
+                  "value": 1
+                },
+                {"value": 0.35}
+              ]
+            }
+          },
+          "symbols": {
+            "name": "series_legend_symbols",
+            "interactive": true,
+            "update": {
+              "opacity": [
+                {
+                  "test": "(!length(data(\"param_9_store\")) || (param_9[\"series\"] && indexof(param_9[\"series\"], datum.value) >= 0))",
+                  "value": 1
+                },
+                {"value": 0.35}
+              ]
+            }
+          },
+          "entries": {
+            "name": "series_legend_entries",
+            "interactive": true,
+            "update": {"fill": {"value": "transparent"}}
+          }
+        }
+      }
+    ],
+    "config": {
+      "range": {
+        "category": [
+          "#36B7B4",
+          "#E6224B",
+          "#F4C245",
+          "#0063AF",
+          "#00A767",
+          "#179FDB",
+          "#EB5C2E"
+        ],
+        "diverging": ["#E6224B", "#E54753", "#C9C9C9", "#179FDB", "#122B39"],
+        "heatmap": ["#C9C9C9", "#179FDB", "#0063AF", "#122B39"],
+        "ordinal": ["#00A767", "#36B7B4", "#179FDB", "#0063AF", "#243B5A"]
+      },
+      "axis": {
+        "labelColor": "#676A86",
+        "labelFontSize": 11,
+        "labelFont": "Circular Std",
+        "labelOpacity": 0.7,
+        "tickColor": "#676A86",
+        "tickOpacity": 0.5,
+        "domainColor": "#676A86",
+        "domainOpacity": 0.5,
+        "gridColor": "#676A86",
+        "gridDash": [2, 2],
+        "gridOpacity": 0.5,
+        "title": null,
+        "titleColor": "#676A86",
+        "titleOpacity": 0.8,
+        "tickSize": 4
+      },
+      "legend": {
+        "titleColor": "#122b39",
+        "title": null,
+        "labelColor": "#122b39",
+        "labelFontSize": 11
+      },
+      "style": {
+        "guide-label": {"font": "Circular Std"},
+        "guide-title": {"font": "Circular Std"},
+        "group-title": {
+          "font": "Circular Std",
+          "fontSize": 14,
+          "fill": "#122b39E6"
+        },
+        "group-subtitle": {"font": "Circular Std"},
+        "cell": {"stroke": null},
+        "area": {"opacity": 0.3},
+        "point": {"size": 80, "opacity": 0.95},
+        "rect": {"fill": "#d6d4d4", "opacity": 0.3},
+        "text": {
+          "font": "Circular Std",
+          "align": "left",
+          "baseline": "middle",
+          "dx": 7,
+          "dy": 0,
+          "fontSize": 11
+        },
+        "geoshape": {"stroke": "white", "strokeWidth": 0.3}
+      },
+      "title": {
+        "subtitleColor": "#676A86",
+        "subtitleFont": "Circular Std",
+        "subtitleFontSize": 12,
+        "subtitlePadding": 4
+      }
+    }
+  }
